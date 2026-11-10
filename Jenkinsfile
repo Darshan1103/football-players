@@ -78,7 +78,21 @@ pipeline {
                 '''
             }
         }
-
+        stage('Docker Hub Credential Check') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKERHUB_USER',
+                    passwordVariable: 'DOCKERHUB_TOKEN'
+                )]) {
+                    powershell '''
+                        Write-Output "Configured Docker Hub username: [$env:DOCKERHUB_USER]"
+                        Write-Output "Username length: $($env:DOCKERHUB_USER.Length)"
+                        Write-Output "Token length: $($env:DOCKERHUB_TOKEN.Length)"
+                    '''
+                }
+            }
+        }
 
         stage('Docker Hub Login Test') {
             steps {
