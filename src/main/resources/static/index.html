@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>⚽ Football Manager</h1>
+        <p>Player Management Dashboard</p>
+    </header>
+
+    <main>
+        <section class="stats">
+            <h2>Total Players: <span id="playerCount">0</span></h2>
+        </section>
+
+        <section class="form-section">
+            <h2 id="formTitle">Add New Player</h2>
+
+            <form id="playerForm">
+                <input type="hidden" id="playerId">
+
+                <input type="text" id="name"
+                       placeholder="Player Name" required>
+
+                <input type="text" id="position"
+                       placeholder="Position (e.g. Forward)" required>
+
+                <input type="text" id="team"
+                       placeholder="Team Name" required>
+
+                <input type="number" id="jerseyNumber"
+                       placeholder="Jersey Number" required>
+
+                <button type="submit" id="submitButton">
+                    Add Player
+                </button>
+            </form>
+        </section>
+
+        <section class="players-section">
+            <h2>Player List</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Position</th>
+                        <th>Team</th>
+                        <th>Jersey No.</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody id="playerTable"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

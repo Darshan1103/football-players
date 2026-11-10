@@ -1,0 +1,115 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f4f6f9;
+    color: #222;
+}
+
+header {
+    background: #14213d;
+    color: white;
+    text-align: center;
+    padding: 25px;
+}
+
+header h1 {
+    margin-bottom: 8px;
+}
+
+main {
+    max-width: 1100px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+.stats, .form-section, .players-section {
+    background: white;
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.stats h2 {
+    color: #14213d;
+}
+
+.form-section h2, .players-section h2 {
+    margin-bottom: 20px;
+    color: #14213d;
+}
+
+form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+input {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+button {
+    padding: 12px 18px;
+    background: #14213d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #263f70;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 13px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background: #14213d;
+    color: white;
+}
+
+.action-button {
+    margin: 3px;
+    padding: 7px 10px;
+}
+
+.delete-button {
+    background: #c0392b;
+}
+
+@media (max-width: 700px) {
+    main {
+        padding: 10px;
+    }
+
+    form {
+        grid-template-columns: 1fr;
+    }
+
+    .players-section {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 650px;
+    }
+}
