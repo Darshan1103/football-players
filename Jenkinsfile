@@ -89,6 +89,7 @@ pipeline {
                         Write-Output "Configured Docker Hub username: [$env:DOCKERHUB_USER]"
                         Write-Output "Username length: $($env:DOCKERHUB_USER.Length)"
                         Write-Output "Token length: $($env:DOCKERHUB_TOKEN.Length)"
+                        Write-Output "Token has surrounding whitespace: $($env:DOCKERHUB_TOKEN -ne $env:DOCKERHUB_TOKEN.Trim())"
                     '''
                 }
             }
