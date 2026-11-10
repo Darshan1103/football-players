@@ -16,6 +16,13 @@ pipeline {
                 bat '"C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version'
             }
         }
+
+        stage('Docker Build') {
+            steps {
+                echo 'Building Football Players Docker image...'
+                bat '"C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" build -t football-players:1.0 .'
+            }
+        }
     }
 
     post {
