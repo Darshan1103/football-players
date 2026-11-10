@@ -79,6 +79,29 @@ pipeline {
             }
         }
 
+        stage('Docker Hub Login Test') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKERHUB_USER',
+                    passwordVariable: 'DOCKERHUB_TOKEN'
+                )]) {
+                    powershell '''
+                        $docker = "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+
+                        $env:DOCKERHUB_TOKEN |
+                        & $docker --context desktop-linux login -u $env:DOCKERHUB_USER --password-stdin
+
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Docker Hub login failed."
+                        }
+
+                        Write-Output "Docker Hub login successful."
+                    '''
+                }
+            }
+        }
+
     }
 
     post {
