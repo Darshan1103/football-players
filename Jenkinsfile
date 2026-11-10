@@ -13,7 +13,7 @@ pipeline {
         stage('Docker Check') {
             steps {
                 echo 'Checking Docker access from Jenkins...'
-                bat 'docker version'
+                bat '"C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version'
             }
         }
     }
