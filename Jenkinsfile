@@ -95,6 +95,27 @@ pipeline {
             }
         }
 
+        stage('Network Environment Check') {
+            steps {
+                powershell '''
+                    foreach ($name in @(
+                        "HTTP_PROXY",
+                        "HTTPS_PROXY",
+                        "ALL_PROXY",
+                        "NO_PROXY"
+                    )) {
+                        $value = [Environment]::GetEnvironmentVariable($name)
+
+                        if ([string]::IsNullOrWhiteSpace($value)) {
+                            Write-Output "$name : Not set"
+                        } else {
+                            Write-Output "$name : Set"
+                        }
+                    }
+                '''
+            }
+        }
+
         stage('Docker Hub Login Test') {
             steps {
                 withCredentials([usernamePassword(
