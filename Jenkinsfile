@@ -102,6 +102,24 @@ pipeline {
             }
         }
 
+        stage('Docker Environment Variables') {
+            steps {
+                powershell '''
+                    Write-Output "DOCKER_CONFIG:"
+                    Write-Output $env:DOCKER_CONFIG
+
+                    Write-Output "DOCKER_HOST:"
+                    Write-Output $env:DOCKER_HOST
+
+                    Write-Output "DOCKER_CONTEXT:"
+                    Write-Output $env:DOCKER_CONTEXT
+
+                    Write-Output "DOCKER_AUTH_CONFIG:"
+                    Write-Output $(if ($env:DOCKER_AUTH_CONFIG) { "Present" } else { "Not present" })
+                '''
+            }
+        }
+
     }
 
     post {
