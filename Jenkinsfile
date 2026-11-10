@@ -45,7 +45,7 @@ pipeline {
         // }
 
 
-        stage('Docker Hub Login Test') {
+        stage('Docker Hub Token Fingerprint') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-credentials',
@@ -53,14 +53,11 @@ pipeline {
                     passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
                     powershell '''
-                        $env:DOCKERHUB_TOKEN |
-                        & "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" login -u $env:DOCKERHUB_USER --password-stdin
+                        $sha = [System.Security.Cryptography.SHA256]::Create()
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:DOCKERHUB_TOKEN.Trim())
+                        $hash = [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace("-", "")
 
-                        if ($LASTEXITCODE -ne 0) {
-                            throw "Docker Hub login failed."
-                        }
-
-                        Write-Output "Docker Hub login successful."
+                        Write-Output "Jenkins fingerprint: $hash"
                     '''
                 }
             }
