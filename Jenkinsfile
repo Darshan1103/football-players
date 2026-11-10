@@ -2,194 +2,105 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER = 'C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe'
+        IMAGE_NAME = 'darshan1103/football-players'
+        IMAGE_TAG = '1.0'
+    }
+
     stages {
+
         stage('Build and Test') {
             steps {
-                echo 'Building Football Players application...'
+                echo 'Building and testing Football Players application...'
                 bat 'mvnw.cmd clean package'
             }
         }
 
         stage('Docker Check') {
             steps {
-                echo 'Checking Docker access from Jenkins...'
-                bat '"C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version'
+                echo 'Checking Docker connectivity...'
+                bat '"%DOCKER%" version'
             }
         }
 
         stage('Docker Build') {
             steps {
                 echo 'Building Football Players Docker image...'
-                bat '"C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" build -t football-players:1.0 .'
+                bat '"%DOCKER%" build -t football-players:1.0 .'
             }
         }
 
-
-        // stage('Docker Push') {
-        //     steps {
-        //         withCredentials([usernamePassword(
-        //             credentialsId: 'dockerhub-credentials',
-        //             usernameVariable: 'DOCKERHUB_USER',
-        //             passwordVariable: 'DOCKERHUB_TOKEN'
-        //         )]) {
-        //             bat '''
-        //                 @echo off
-        //                 echo %DOCKERHUB_TOKEN% | "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" login -u %DOCKERHUB_USER% --password-stdin
-
-        //                 "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" tag football-players:1.0 darshan1103/football-players:1.0
-
-        //                 "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" push darshan1103/football-players:1.0
-        //             '''
-        //         }
-        //     }
-        // }
-
-
-        stage('Docker Hub Token Fingerprint') {
+        stage('Docker Hub Login and Push') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKERHUB_USER',
-                    passwordVariable: 'DOCKERHUB_TOKEN'
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKERHUB_USER',
+                        passwordVariable: 'DOCKERHUB_TOKEN'
+                    )
+                ]) {
                     powershell '''
-                        $sha = [System.Security.Cryptography.SHA256]::Create()
-                        $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:DOCKERHUB_TOKEN.Trim())
-                        $hash = [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace("-", "")
+                        $ErrorActionPreference = "Stop"
 
-                        Write-Output "Jenkins fingerprint: $hash"
-                    '''
-                }
-            }
-        }
-        stage('Docker Environment Check') {
-            steps {
-                powershell '''
-                    $docker = "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+                        $docker = $env:DOCKER
+                        $configDir = Join-Path $env:TEMP "football-players-docker-$env:BUILD_NUMBER"
 
-                    Write-Output "Docker context:"
-                    & $docker context show
+                        try {
+                            New-Item -ItemType Directory -Path $configDir -Force | Out-Null
 
-                    Write-Output "Docker root directory:"
-                    & $docker info --format '{{.DockerRootDir}}'
+                            # Use an isolated Docker configuration.
+                            $env:DOCKER_CONFIG = $configDir
 
-                    Write-Output "Docker configuration location:"
-                    Write-Output $env:DOCKER_CONFIG
-                '''
-            }
-        }
-        stage('Docker Hub Credential Check') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKERHUB_USER',
-                    passwordVariable: 'DOCKERHUB_TOKEN'
-                )]) {
-                    powershell '''
-                        Write-Output "Configured Docker Hub username: [$env:DOCKERHUB_USER]"
-                        Write-Output "Username length: $($env:DOCKERHUB_USER.Length)"
-                        Write-Output "Token length: $($env:DOCKERHUB_TOKEN.Length)"
-                        Write-Output "Token has surrounding whitespace: $($env:DOCKERHUB_TOKEN -ne $env:DOCKERHUB_TOKEN.Trim())"
-                    '''
-                }
-            }
-        }
+                            Write-Output "Logging in to Docker Hub..."
 
-        stage('Network Environment Check') {
-            steps {
-                powershell '''
-                    foreach ($name in @(
-                        "HTTP_PROXY",
-                        "HTTPS_PROXY",
-                        "ALL_PROXY",
-                        "NO_PROXY"
-                    )) {
-                        $value = [Environment]::GetEnvironmentVariable($name)
+                            $env:DOCKERHUB_TOKEN |
+                                & $docker login --username $env:DOCKERHUB_USER --password-stdin
 
-                        if ([string]::IsNullOrWhiteSpace($value)) {
-                            Write-Output "$name : Not set"
-                        } else {
-                            Write-Output "$name : Set"
+                            if ($LASTEXITCODE -ne 0) {
+                                throw "Docker Hub login failed."
+                            }
+
+                            Write-Output "Docker Hub login successful."
+
+                            Write-Output "Tagging Docker image..."
+
+                            & $docker tag football-players:1.0 "$env:IMAGE_NAME`:$env:IMAGE_TAG"
+
+                            if ($LASTEXITCODE -ne 0) {
+                                throw "Docker image tagging failed."
+                            }
+
+                            Write-Output "Pushing image to Docker Hub..."
+
+                            & $docker push "$env:IMAGE_NAME`:$env:IMAGE_TAG"
+
+                            if ($LASTEXITCODE -ne 0) {
+                                throw "Docker image push failed."
+                            }
+
+                            Write-Output "Docker image pushed successfully."
                         }
-                    }
-                '''
-            }
-        }
+                        finally {
+                            & $docker logout 2>$null | Out-Null
 
-        stage('Docker Hub Login Test') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKERHUB_USER',
-                    passwordVariable: 'DOCKERHUB_TOKEN'
-                )]) {
-                    powershell '''
-                        $docker = "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+                            Remove-Item -Path $configDir -Recurse -Force -ErrorAction SilentlyContinue
 
-                        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-                        $startInfo.FileName = $docker
-                        $startInfo.Arguments = "login -u $env:DOCKERHUB_USER --password-stdin"
-                        $startInfo.UseShellExecute = $false
-                        $startInfo.RedirectStandardInput = $true
-                        $startInfo.RedirectStandardOutput = $true
-                        $startInfo.RedirectStandardError = $true
-                        $startInfo.CreateNoWindow = $true
-
-                        $process = New-Object System.Diagnostics.Process
-                        $process.StartInfo = $startInfo
-
-                        [void]$process.Start()
-
-                        $tokenBytes = [System.Text.Encoding]::UTF8.GetBytes($env:DOCKERHUB_TOKEN + "`n")
-                        $process.StandardInput.BaseStream.Write($tokenBytes, 0, $tokenBytes.Length)
-                        $process.StandardInput.Close()
-
-                        $output = $process.StandardOutput.ReadToEnd()
-                        $errorOutput = $process.StandardError.ReadToEnd()
-
-                        $process.WaitForExit()
-
-                        Write-Output $output
-
-                        if ($process.ExitCode -ne 0) {
-                            Write-Output $errorOutput
-                            throw "Docker Hub login failed."
+                            Remove-Item Env:DOCKER_CONFIG -ErrorAction SilentlyContinue
                         }
-
-                        Write-Output "Docker Hub authentication successful."
                     '''
                 }
             }
         }
-
-
-        stage('Docker Environment Variables') {
-            steps {
-                powershell '''
-                    Write-Output "DOCKER_CONFIG:"
-                    Write-Output $env:DOCKER_CONFIG
-
-                    Write-Output "DOCKER_HOST:"
-                    Write-Output $env:DOCKER_HOST
-
-                    Write-Output "DOCKER_CONTEXT:"
-                    Write-Output $env:DOCKER_CONTEXT
-
-                    Write-Output "DOCKER_AUTH_CONFIG:"
-                    Write-Output $(if ($env:DOCKER_AUTH_CONFIG) { "Present" } else { "Not present" })
-                '''
-            }
-        }
-
     }
 
     post {
         success {
-            echo 'Build, tests and Docker check completed successfully!'
+            echo 'Build, tests, Docker build and Docker Hub push completed successfully!'
         }
 
         failure {
-            echo 'Pipeline failed. Please check the logs.'
+            echo 'Pipeline failed. Please check the Jenkins console output.'
         }
     }
 }
