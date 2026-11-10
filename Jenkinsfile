@@ -90,13 +90,13 @@ pipeline {
                         $docker = "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
 
                         $env:DOCKERHUB_TOKEN |
-                        & $docker --context desktop-linux login -u $env:DOCKERHUB_USER --password-stdin
+                            & $docker login -u $env:DOCKERHUB_USER --password-stdin
 
                         if ($LASTEXITCODE -ne 0) {
                             throw "Docker Hub login failed."
                         }
 
-                        Write-Output "Docker Hub login successful."
+                        Write-Output "Docker Hub authentication successful."
                     '''
                 }
             }
