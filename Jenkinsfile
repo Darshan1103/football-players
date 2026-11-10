@@ -62,6 +62,22 @@ pipeline {
                 }
             }
         }
+        stage('Docker Environment Check') {
+            steps {
+                powershell '''
+                    $docker = "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+
+                    Write-Output "Docker context:"
+                    & $docker context show
+
+                    Write-Output "Docker root directory:"
+                    & $docker info --format '{{.DockerRootDir}}'
+
+                    Write-Output "Docker configuration location:"
+                    Write-Output $env:DOCKER_CONFIG
+                '''
+            }
+        }
 
     }
 
