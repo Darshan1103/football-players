@@ -79,6 +79,7 @@ pipeline {
             }
         }
 
+
         stage('Docker Hub Login Test') {
             steps {
                 withCredentials([usernamePassword(
@@ -89,10 +90,33 @@ pipeline {
                     powershell '''
                         $docker = "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
 
-                        $env:DOCKERHUB_TOKEN |
-                            & $docker login -u $env:DOCKERHUB_USER --password-stdin
+                        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+                        $startInfo.FileName = $docker
+                        $startInfo.Arguments = "login -u $env:DOCKERHUB_USER --password-stdin"
+                        $startInfo.UseShellExecute = $false
+                        $startInfo.RedirectStandardInput = $true
+                        $startInfo.RedirectStandardOutput = $true
+                        $startInfo.RedirectStandardError = $true
+                        $startInfo.CreateNoWindow = $true
 
-                        if ($LASTEXITCODE -ne 0) {
+                        $process = New-Object System.Diagnostics.Process
+                        $process.StartInfo = $startInfo
+
+                        [void]$process.Start()
+
+                        $tokenBytes = [System.Text.Encoding]::UTF8.GetBytes($env:DOCKERHUB_TOKEN + "`n")
+                        $process.StandardInput.BaseStream.Write($tokenBytes, 0, $tokenBytes.Length)
+                        $process.StandardInput.Close()
+
+                        $output = $process.StandardOutput.ReadToEnd()
+                        $errorOutput = $process.StandardError.ReadToEnd()
+
+                        $process.WaitForExit()
+
+                        Write-Output $output
+
+                        if ($process.ExitCode -ne 0) {
+                            Write-Output $errorOutput
                             throw "Docker Hub login failed."
                         }
 
@@ -101,6 +125,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Docker Environment Variables') {
             steps {
