@@ -44,6 +44,7 @@ pipeline {
         //     }
         // }
 
+
         stage('Docker Hub Login Test') {
             steps {
                 withCredentials([usernamePassword(
@@ -51,15 +52,20 @@ pipeline {
                     usernameVariable: 'DOCKERHUB_USER',
                     passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
-                    bat '''
-                        @echo off
-                        echo %DOCKERHUB_TOKEN% | "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" login -u %DOCKERHUB_USER% --password-stdin
-                        if errorlevel 1 exit /b 1
-                        echo Docker Hub authentication successful.
+                    powershell '''
+                        $env:DOCKERHUB_TOKEN |
+                        & "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" login -u $env:DOCKERHUB_USER --password-stdin
+
+                        if ($LASTEXITCODE -ne 0) {
+                            exit 1
+                        }
+
+                        Write-Output "Docker Hub authentication successful."
                     '''
                 }
             }
         }
+
     }
 
     post {
