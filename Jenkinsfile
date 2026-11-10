@@ -45,7 +45,7 @@ pipeline {
         // }
 
 
-        stage('Docker Hub Credential Check') {
+        stage('Docker Hub Login Test') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-credentials',
@@ -53,12 +53,14 @@ pipeline {
                     passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
                     powershell '''
-                        Write-Output "Docker Hub username: $env:DOCKERHUB_USER"
-                        Write-Output "Token length: $($env:DOCKERHUB_TOKEN.Length)"
+                        $env:DOCKERHUB_TOKEN |
+                        & "C:\\Users\\Darshan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" login -u $env:DOCKERHUB_USER --password-stdin
 
-                        if ([string]::IsNullOrEmpty($env:DOCKERHUB_TOKEN)) {
-                            throw "Docker Hub token was not received from Jenkins credentials."
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Docker Hub login failed."
                         }
+
+                        Write-Output "Docker Hub login successful."
                     '''
                 }
             }
