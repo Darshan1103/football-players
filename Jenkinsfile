@@ -31,7 +31,8 @@ pipeline {
             }
         }
 
-        stage('Docker Hub Login and Push') {
+        
+        stage('Docker Hub API Authentication Test') {
             steps {
                 withCredentials([
                     usernamePassword(
@@ -41,57 +42,38 @@ pipeline {
                     )
                 ]) {
                     powershell '''
-                        $ErrorActionPreference = "Stop"
-
-                        $docker = $env:DOCKER
-                        $configDir = Join-Path $env:TEMP "football-players-docker-$env:BUILD_NUMBER"
+                        $body = @{
+                            username = $env:DOCKERHUB_USER
+                            password = $env:DOCKERHUB_TOKEN
+                        } | ConvertTo-Json -Compress
 
                         try {
-                            New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+                            $response = Invoke-RestMethod `
+                                -Uri "https://hub.docker.com/v2/users/login/" `
+                                -Method POST `
+                                -ContentType "application/json" `
+                                -Body $body
 
-                            # Use an isolated Docker configuration.
-                            $env:DOCKER_CONFIG = $configDir
-
-                            Write-Output "Logging in to Docker Hub..."
-
-                            $env:DOCKERHUB_TOKEN |
-                                & $docker login --username $env:DOCKERHUB_USER --password-stdin
-
-                            if ($LASTEXITCODE -ne 0) {
-                                throw "Docker Hub login failed."
+                            if ($response.token) {
+                                Write-Output "Docker Hub API authentication successful."
+                            } else {
+                                throw "No authentication token returned."
                             }
-
-                            Write-Output "Docker Hub login successful."
-
-                            Write-Output "Tagging Docker image..."
-
-                            & $docker tag football-players:1.0 "$env:IMAGE_NAME`:$env:IMAGE_TAG"
-
-                            if ($LASTEXITCODE -ne 0) {
-                                throw "Docker image tagging failed."
-                            }
-
-                            Write-Output "Pushing image to Docker Hub..."
-
-                            & $docker push "$env:IMAGE_NAME`:$env:IMAGE_TAG"
-
-                            if ($LASTEXITCODE -ne 0) {
-                                throw "Docker image push failed."
-                            }
-
-                            Write-Output "Docker image pushed successfully."
+                        }
+                        catch {
+                            Write-Output "Docker Hub API authentication failed."
+                            Write-Output "HTTP status: $([int]$_.Exception.Response.StatusCode)"
+                            throw "Credential validation failed."
                         }
                         finally {
-                            & $docker logout 2>$null | Out-Null
-
-                            Remove-Item -Path $configDir -Recurse -Force -ErrorAction SilentlyContinue
-
-                            Remove-Item Env:DOCKER_CONFIG -ErrorAction SilentlyContinue
+                            $body = $null
+                            $response = $null
                         }
                     '''
                 }
             }
         }
+
     }
 
     post {
