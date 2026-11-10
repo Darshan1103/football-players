@@ -9,11 +9,18 @@ pipeline {
                 bat 'mvnw.cmd clean package'
             }
         }
+
+        stage('Docker Check') {
+            steps {
+                echo 'Checking Docker access from Jenkins...'
+                bat 'docker version'
+            }
+        }
     }
 
     post {
         success {
-            echo 'Build and tests completed successfully!'
+            echo 'Build, tests and Docker check completed successfully!'
         }
 
         failure {
