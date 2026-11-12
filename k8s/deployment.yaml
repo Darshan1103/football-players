@@ -20,6 +20,17 @@ spec:
         - name: football-players
           image: IMAGE_PLACEHOLDER # Jenkins replaces this with darshan1103/football-players:<build no.>
           ports: [{ containerPort: 8080 }]
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: football-secret
+                  key: db-username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: football-secret
+                  key: db-password
           readinessProbe:
             httpGet: { path: /api/players, port: 8080 }
             initialDelaySeconds: 15
@@ -34,15 +45,3 @@ spec:
   sessionAffinity: ClientIP
   selector: { app: football-players }
   ports: [{ port: 80, targetPort: 8080 }]
-
-  env:
-    - name: DB_USERNAME
-      valueFrom:
-        secretKeyRef:
-          name: football-secret
-          key: db-username
-    - name: DB_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: football-secret
-          key: db-password
