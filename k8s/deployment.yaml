@@ -34,3 +34,15 @@ spec:
   sessionAffinity: ClientIP
   selector: { app: football-players }
   ports: [{ port: 80, targetPort: 8080 }]
+
+  env:
+    - name: DB_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: football-secret
+          key: db-username
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: football-secret
+          key: db-password
